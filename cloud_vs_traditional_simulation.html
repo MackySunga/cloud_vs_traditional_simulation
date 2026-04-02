@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud vs Traditional Computing Interactive Simulation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, 0.86);
+      --panel-2: rgba(30, 41, 59, 0.92);
+      --text: #e5eefb;
+      --muted: #9fb3cc;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --cloud: #38bdf8;
+      --trad: #f59e0b;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --border: rgba(148, 163, 184, 0.25);
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Space Grotesk", Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(167, 139, 250, 0.12), transparent 25%),
+        linear-gradient(180deg, #020617 0%, #0f172a 52%, #111827 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1400px, calc(100% - 32px));
+      margin: 24px auto 40px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(167, 139, 250, 0.12));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      transform: translateX(-100%);
+      animation: sweep 6s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", "IBM Plex Sans", Arial, Helvetica, sans-serif;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 960px;
+    }
+
+    h2, h3 {
+      font-family: "Space Grotesk", "IBM Plex Sans", Arial, Helvetica, sans-serif;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      line-height: 1.65;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .hero-tag {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(2, 6, 23, 0.4);
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .credit {
+      font-size: 0.95rem;
+      color: var(--text);
+      background: rgba(2, 6, 23, 0.45);
+      border: 1px solid rgba(125, 211, 252, 0.35);
+      padding: 6px 12px;
+      border-radius: 999px;
+      box-shadow: 0 12px 24px rgba(2, 6, 23, 0.35);
+    }
+
+    .legend-row, .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.cloud { background: var(--cloud); box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); }
+    .dot.trad { background: var(--trad); box-shadow: 0 0 10px rgba(245, 158, 11, 0.8); }
+    .dot.req { background: #c084fc; box-shadow: 0 0 10px rgba(192, 132, 252, 0.8); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .panel h2, .panel h3 {
+      margin: 0 0 12px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .control-group h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .slider-wrap { margin-bottom: 14px; }
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .slider-head span:first-child {
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .slider-head span:last-child {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.15);
+      accent-color: var(--accent-2);
+      cursor: pointer;
+    }
+
+    .inline-check {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      color: var(--text);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.18);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    .primary { background: linear-gradient(135deg, var(--cloud), #60a5fa); color: #03111d; }
+    .secondary { background: linear-gradient(135deg, var(--accent-2), #c084fc); color: #12051f; }
+    .ghost { background: rgba(148, 163, 184, 0.14); color: var(--text); border: 1px solid var(--border); }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .scenario-btn {
+      background: rgba(2, 6, 23, 0.58);
+      color: var(--text);
+      border: 1px solid var(--border);
+      min-height: 72px;
+      text-align: left;
+      line-height: 1.25;
+    }
+
+    .scenario-btn small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .main {
+      display: grid;
+      gap: 18px;
+    }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .arena {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(2, 6, 23, 0.88));
+      border-radius: 20px;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .arena-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.3), rgba(15, 23, 42, 0.15));
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+      min-height: 110px;
+    }
+
+    .stat-card .label {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .mini-bar {
+      height: 10px;
+      width: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(148, 163, 184, 0.14);
+    }
+
+    .mini-bar > div {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
+    .cloud-fill { background: linear-gradient(90deg, var(--cloud), #7dd3fc); }
+    .trad-fill { background: linear-gradient(90deg, var(--trad), #fcd34d); }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi {
+      background: rgba(2, 6, 23, 0.58);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .kpi .title {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .kpi .big {
+      font-size: 1.55rem;
+      font-weight: 800;
+    }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .charts .arena canvas {
+      min-height: 260px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(2, 6, 23, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+      transform: translate(-50%, -100%);
+      opacity: 0;
+      transition: opacity 0.12s ease;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    .chart-tooltip.show {
+      opacity: 1;
+    }
+
+    .arena {
+      position: relative;
+    }
+
+    .notes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .note-box {
+      background: rgba(2, 6, 23, 0.5);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      padding: 14px 16px;
+    }
+
+    .note-box p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .emph-cloud { color: var(--cloud); font-weight: 700; }
+    .emph-trad { color: var(--trad); font-weight: 700; }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    .footer {
+      text-align: center;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 1180px) {
+      .grid, .sim-layout, .charts, .notes { grid-template-columns: 1fr; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .container { width: min(100% - 16px, 1400px); }
+      .button-row, .scenario-grid, .stats-grid, .kpi-row { grid-template-columns: 1fr; }
+      .hero, .panel { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-top">
+        <span class="hero-tag">Interactive systems comparison</span>
+        <span class="credit">Created by: Bob Mathew D. Sunga</span>
+      </div>
+      <h1>Cloud Computing vs Traditional Computing</h1>
+      <p class="subtitle">
+        Explore how both systems behave under changing demand, growth, remote access, and outages.
+        This simulation is designed for classroom use so students can see how elasticity, cost, setup time,
+        maintenance, and reliability differ in practice.
+      </p>
+      <div class="legend-row">
+        <div class="chip"><span class="dot req"></span> Incoming requests</div>
+        <div class="chip"><span class="dot cloud"></span> Cloud computing lane</div>
+        <div class="chip"><span class="dot trad"></span> Traditional computing lane</div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel">
+        <h2>Controls</h2>
+        <div class="controls">
+          <div class="control-group">
+            <h3>Workload</h3>
+            <div class="slider-wrap">
+              <div class="slider-head"><span>Base request load</span><span id="loadVal">180 req/s</span></div>
+              <input id="loadSlider" type="range" min="60" max="400" value="180" step="10" />
+            </div>
+            <div class="slider-wrap">
+              <div class="slider-head"><span>Traffic spike intensity</span><span id="spikeVal">35%</span></div>
+              <input id="spikeSlider" type="range" min="0" max="120" value="35" step="5" />
+            </div>
+            <div class="slider-wrap">
+              <div class="slider-head"><span>Growth rate over time</span><span id="growthVal">20%</span></div>
+              <input id="growthSlider" type="range" min="0" max="80" value="20" step="5" />
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>Environment</h3>
+            <div class="slider-wrap">
+              <div class="slider-head"><span>Remote workforce</span><span id="remoteVal">55%</span></div>
+              <input id="remoteSlider" type="range" min="0" max="100" value="55" step="5" />
+            </div>
+            <div class="slider-wrap">
+              <div class="slider-head"><span>Traditional upgrade delay</span><span id="delayVal">7 s</span></div>
+              <input id="delaySlider" type="range" min="2" max="18" value="7" step="1" />
+            </div>
+            <div class="inline-check">
+              <span>Random outage event</span>
+              <input id="outageCheck" type="checkbox" checked />
+            </div>
+            <div class="inline-check">
+              <span>Autoscaling enabled for cloud</span>
+              <input id="autoscaleCheck" type="checkbox" checked />
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>Scenarios</h3>
+            <div class="scenario-grid">
+              <button class="scenario-btn" data-scenario="startup">Startup app<small>Fast growth, limited budget</small></button>
+              <button class="scenario-btn" data-scenario="enterprise">Enterprise portal<small>Stable load, many employees</small></button>
+              <button class="scenario-btn" data-scenario="viral">Viral launch<small>Sudden spikes and global traffic</small></button>
+              <button class="scenario-btn" data-scenario="legacy">Legacy system<small>Stable but slower to upgrade</small></button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h3>Run simulation</h3>
+            <div class="button-row">
+              <button id="startBtn" class="primary">Start</button>
+              <button id="pauseBtn" class="secondary">Pause</button>
+              <button id="resetBtn" class="ghost">Reset</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="panel">
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="title">Elapsed time</div>
+              <div class="big" id="elapsedKpi">0.0 s</div>
+            </div>
+            <div class="kpi">
+              <div class="title">Current demand</div>
+              <div class="big" id="demandKpi">180 req/s</div>
+            </div>
+            <div class="kpi">
+              <div class="title">Cloud winner score</div>
+              <div class="big" id="cloudScoreKpi">50</div>
+            </div>
+            <div class="kpi">
+              <div class="title">Traditional winner score</div>
+              <div class="big" id="tradScoreKpi">50</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel sim-layout">
+          <div class="arena">
+            <div class="arena-head">
+              <span>Animated Requests Flow</span>
+              <span>Observe queue buildup, autoscaling, and processing capacity</span>
+            </div>
+            <canvas id="simCanvas" width="920" height="420"></canvas>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="label">Cloud capacity usage</div>
+              <div class="value" id="cloudUtil">0%</div>
+              <div class="mini-bar"><div id="cloudUtilBar" class="cloud-fill" style="width:0%"></div></div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Traditional capacity usage</div>
+              <div class="value" id="tradUtil">0%</div>
+              <div class="mini-bar"><div id="tradUtilBar" class="trad-fill" style="width:0%"></div></div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Cloud queue</div>
+              <div class="value" id="cloudQueue">0</div>
+              <div class="label">Elastic nodes: <span id="cloudNodes">3</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Traditional queue</div>
+              <div class="value" id="tradQueue">0</div>
+              <div class="label">Server racks: <span id="tradNodes">3</span></div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Cloud cumulative cost</div>
+              <div class="value" id="cloudCost">$0</div>
+              <div class="label">Pay for active use and scaling</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Traditional cumulative cost</div>
+              <div class="value" id="tradCost">$0</div>
+              <div class="label">Fixed hardware plus upgrade expense</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Cloud availability</div>
+              <div class="value" id="cloudAvail">100%</div>
+              <div class="label">Setup time: minutes to hours</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Traditional availability</div>
+              <div class="value" id="tradAvail">100%</div>
+              <div class="label">Setup time: days to weeks</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel charts">
+          <div class="arena">
+            <div class="arena-head"><span>Demand vs capacity</span><span>Blue = cloud, amber = traditional, purple = demand</span></div>
+            <canvas id="capacityCanvas" width="680" height="300"></canvas>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#c084fc"></span>Demand</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#38bdf8"></span>Cloud capacity</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#f59e0b"></span>Traditional capacity</span>
+            </div>
+            <div class="chart-tooltip" id="capacityTip"></div>
+          </div>
+          <div class="arena">
+            <div class="arena-head"><span>Cumulative cost over time</span><span>Watch how scaling behavior affects spending</span></div>
+            <canvas id="costCanvas" width="680" height="300"></canvas>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#38bdf8"></span>Cloud cost</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#f59e0b"></span>Traditional cost</span>
+            </div>
+            <div class="chart-tooltip" id="costTip"></div>
+          </div>
+          <div class="arena">
+            <div class="arena-head"><span>Queue backlog over time</span><span>Shows pressure on each model</span></div>
+            <canvas id="queueCanvas" width="680" height="300"></canvas>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#38bdf8"></span>Cloud queue</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#f59e0b"></span>Traditional queue</span>
+            </div>
+            <div class="chart-tooltip" id="queueTip"></div>
+          </div>
+          <div class="arena">
+            <div class="arena-head"><span>Active nodes and racks</span><span>Scaling response for cloud vs traditional</span></div>
+            <canvas id="nodesCanvas" width="680" height="300"></canvas>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#38bdf8"></span>Cloud nodes</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#f59e0b"></span>Traditional racks</span>
+            </div>
+            <div class="chart-tooltip" id="nodesTip"></div>
+          </div>
+          <div class="arena">
+            <div class="arena-head"><span>Availability trend</span><span>Impact of outages and recovery</span></div>
+            <canvas id="availCanvas" width="680" height="300"></canvas>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#34d399"></span>Cloud availability</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24"></span>Traditional availability</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#fb7185"></span>Outage marker</span>
+            </div>
+            <div class="chart-tooltip" id="availTip"></div>
+          </div>
+        </section>
+
+        <section class="panel notes">
+          <div class="note-box">
+            <h3>What students should notice</h3>
+            <p id="teachingNote">
+              When demand changes quickly, <span class="emph-cloud">cloud computing</span> usually responds faster because
+              resources can scale on demand. <span class="emph-trad">Traditional computing</span> works well for predictable
+              workloads, but sudden spikes can create queues while new hardware is being added.
+            </p>
+          </div>
+          <div class="note-box">
+            <h3>Interpretation</h3>
+            <p id="insightNote">
+              Start the simulation, increase spike intensity, and watch the traditional queue grow first. Then turn off cloud
+              autoscaling to show that cloud advantages depend on proper configuration, not just the word "cloud."
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="footer">
+      Standalone classroom HTML simulation. Save and open in any modern browser.
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const controls = {
+      load: $("loadSlider"),
+      spike: $("spikeSlider"),
+      growth: $("growthSlider"),
+      remote: $("remoteSlider"),
+      delay: $("delaySlider"),
+      outage: $("outageCheck"),
+      autoscale: $("autoscaleCheck")
+    };
+
+    const outputs = {
+      load: $("loadVal"),
+      spike: $("spikeVal"),
+      growth: $("growthVal"),
+      remote: $("remoteVal"),
+      delay: $("delayVal")
+    };
+
+    const simCanvas = $("simCanvas");
+    const simCtx = simCanvas.getContext("2d");
+    const capacityCanvas = $("capacityCanvas");
+    const capCtx = capacityCanvas.getContext("2d");
+    const costCanvas = $("costCanvas");
+    const costCtx = costCanvas.getContext("2d");
+    const queueCanvas = $("queueCanvas");
+    const queueCtx = queueCanvas.getContext("2d");
+    const nodesCanvas = $("nodesCanvas");
+    const nodesCtx = nodesCanvas.getContext("2d");
+    const availCanvas = $("availCanvas");
+    const availCtx = availCanvas.getContext("2d");
+    const tooltips = {
+      capacity: $("capacityTip"),
+      cost: $("costTip"),
+      queue: $("queueTip"),
+      nodes: $("nodesTip"),
+      avail: $("availTip")
+    };
+
+    const state = {
+      running: false,
+      elapsed: 0,
+      lastTs: 0,
+      demand: Number(controls.load.value),
+      cloud: {
+        nodes: 3,
+        capacityPerNode: 75,
+        queue: 0,
+        dropped: 0,
+        cost: 0,
+        served: 0,
+        availabilityLoss: 0,
+        outageTimer: 0,
+        requestDots: [],
+        processedPulse: 0,
+      },
+      trad: {
+        nodes: 3,
+        capacityPerNode: 70,
+        queue: 0,
+        dropped: 0,
+        cost: 0,
+        served: 0,
+        availabilityLoss: 0,
+        outageTimer: 0,
+        upgradeTimer: 0,
+        requestDots: [],
+        processedPulse: 0,
+      },
+      history: {
+        demand: [],
+        cloudCapacity: [],
+        tradCapacity: [],
+        cloudCost: [],
+        tradCost: [],
+        cloudQueue: [],
+        tradQueue: [],
+        cloudNodes: [],
+        tradNodes: [],
+        cloudAvail: [],
+        tradAvail: [],
+        outageMarks: []
+      },
+      randomOutageCooldown: 6,
+      pendingOutageMark: false,
+      teacherMessage: "",
+      insightMessage: ""
+    };
+
+    function formatMoney(n) {
+      return "$" + Math.round(n).toLocaleString();
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function syncLabels() {
+      outputs.load.textContent = `${controls.load.value} req/s`;
+      outputs.spike.textContent = `${controls.spike.value}%`;
+      outputs.growth.textContent = `${controls.growth.value}%`;
+      outputs.remote.textContent = `${controls.remote.value}%`;
+      outputs.delay.textContent = `${controls.delay.value} s`;
+    }
+
+    Object.values(controls).forEach(el => {
+      el.addEventListener("input", () => {
+        syncLabels();
+        if (!state.running) updateKpis();
+      });
+    });
+    syncLabels();
+
+    function resetState() {
+      state.running = false;
+      state.elapsed = 0;
+      state.lastTs = 0;
+      state.demand = Number(controls.load.value);
+      state.cloud = {
+        nodes: 3,
+        capacityPerNode: 75,
+        queue: 0,
+        dropped: 0,
+        cost: 0,
+        served: 0,
+        availabilityLoss: 0,
+        outageTimer: 0,
+        requestDots: [],
+        processedPulse: 0,
+      };
+      state.trad = {
+        nodes: 3,
+        capacityPerNode: 70,
+        queue: 0,
+        dropped: 0,
+        cost: 0,
+        served: 0,
+        availabilityLoss: 0,
+        outageTimer: 0,
+        upgradeTimer: 0,
+        requestDots: [],
+        processedPulse: 0,
+      };
+      state.history = {
+        demand: [],
+        cloudCapacity: [],
+        tradCapacity: [],
+        cloudCost: [],
+        tradCost: [],
+        cloudQueue: [],
+        tradQueue: [],
+        cloudNodes: [],
+        tradNodes: [],
+        cloudAvail: [],
+        tradAvail: [],
+        outageMarks: []
+      };
+      state.pendingOutageMark = false;
+      state.randomOutageCooldown = 6;
+      state.teacherMessage = "Adjust the sliders and start the simulation. Higher spikes highlight elasticity. Longer upgrade delays punish traditional setups more.";
+      state.insightMessage = "Compare queue growth and cost growth together. The lower queue does not always mean lower cost, which makes architecture decisions more realistic.";
+      updateKpis();
+      drawSimulation();
+      drawCharts();
+    }
+
+    function setScenario(name) {
+      const presets = {
+        startup: { load: 130, spike: 45, growth: 35, remote: 70, delay: 7, outage: true, autoscale: true },
+        enterprise: { load: 220, spike: 20, growth: 10, remote: 60, delay: 6, outage: true, autoscale: true },
+        viral: { load: 180, spike: 95, growth: 55, remote: 80, delay: 10, outage: true, autoscale: true },
+        legacy: { load: 150, spike: 15, growth: 5, remote: 25, delay: 13, outage: false, autoscale: true },
+      };
+      const p = presets[name];
+      controls.load.value = p.load;
+      controls.spike.value = p.spike;
+      controls.growth.value = p.growth;
+      controls.remote.value = p.remote;
+      controls.delay.value = p.delay;
+      controls.outage.checked = p.outage;
+      controls.autoscale.checked = p.autoscale;
+      syncLabels();
+      resetState();
+    }
+
+    document.querySelectorAll(".scenario-btn").forEach(btn => {
+      btn.addEventListener("click", () => setScenario(btn.dataset.scenario));
+    });
+
+    function maybeSpawnOutage(dt) {
+      state.randomOutageCooldown -= dt;
+      if (!controls.outage.checked || state.randomOutageCooldown > 0) return;
+      const chance = Math.random();
+      if (chance < 0.06) {
+        state.cloud.outageTimer = 1.2 + Math.random() * 1.2;
+        state.trad.outageTimer = 2.0 + Math.random() * 2.5;
+        state.randomOutageCooldown = 8 + Math.random() * 8;
+        state.pendingOutageMark = true;
+      }
+    }
+
+    function updateDemand() {
+      const base = Number(controls.load.value);
+      const spike = Number(controls.spike.value) / 100;
+      const growth = Number(controls.growth.value) / 100;
+      const t = state.elapsed;
+      const wave1 = Math.sin(t * 0.9) * 0.12;
+      const wave2 = Math.sin(t * 2.2) * 0.08;
+      const burst = Math.max(0, Math.sin(t * 0.7)) * spike;
+      const timeGrowth = 1 + growth * Math.min(t / 30, 1);
+      state.demand = Math.max(20, base * (1 + wave1 + wave2 + burst) * timeGrowth);
+    }
+
+    function updateSystem(system, kind, dt) {
+      const remoteFactor = Number(controls.remote.value) / 100;
+      const demandShare = state.demand * (0.5 + remoteFactor * (kind === 'cloud' ? 0.12 : -0.07));
+      const capacity = system.nodes * system.capacityPerNode;
+      let effectiveCapacity = capacity;
+      if (system.outageTimer > 0) {
+        system.outageTimer = Math.max(0, system.outageTimer - dt);
+        effectiveCapacity *= kind === 'cloud' ? 0.65 : 0.42;
+        system.availabilityLoss += dt;
+      }
+
+      const incoming = Math.max(0, demandShare * dt);
+      system.queue += incoming;
+
+      if (kind === 'cloud' && controls.autoscale.checked) {
+        if (system.queue > capacity * 1.1 && system.nodes < 10) {
+          system.nodes += dt * 1.6;
+        } else if (system.queue < capacity * 0.2 && system.nodes > 2.2) {
+          system.nodes -= dt * 0.25;
+        }
+      }
+
+      if (kind === 'trad') {
+        if (system.queue > capacity * 1.15) {
+          system.upgradeTimer += dt;
+        } else {
+          system.upgradeTimer = Math.max(0, system.upgradeTimer - dt * 0.5);
+        }
+        if (system.upgradeTimer >= Number(controls.delay.value)) {
+          system.nodes = Math.min(8, system.nodes + 1);
+          system.upgradeTimer = 0;
+          system.cost += 1200;
+        }
+      }
+
+      const processed = Math.min(system.queue, effectiveCapacity * dt);
+      system.queue -= processed;
+      system.served += processed;
+      system.processedPulse = processed;
+
+      const dropThreshold = effectiveCapacity * 2.4;
+      if (system.queue > dropThreshold) {
+        const overflow = (system.queue - dropThreshold) * 0.18;
+        system.queue -= overflow;
+        system.dropped += overflow;
+      }
+
+      if (kind === 'cloud') {
+        system.cost += (system.nodes * 17 + processed * 0.07) * dt;
+      } else {
+        system.cost += (85 + system.nodes * 8 + processed * 0.025) * dt;
+      }
+
+      system.nodes = clamp(system.nodes, 2, kind === 'cloud' ? 10 : 8);
+    }
+
+    function trimHistory(max = 120) {
+      const excess = state.history.demand.length - max;
+      if (excess <= 0) return;
+      const keys = [
+        "demand",
+        "cloudCapacity",
+        "tradCapacity",
+        "cloudCost",
+        "tradCost",
+        "cloudQueue",
+        "tradQueue",
+        "cloudNodes",
+        "tradNodes",
+        "cloudAvail",
+        "tradAvail"
+      ];
+      keys.forEach(key => state.history[key].splice(0, excess));
+      state.history.outageMarks = state.history.outageMarks
+        .map(idx => idx - excess)
+        .filter(idx => idx >= 0);
+    }
+
+    function captureHistory() {
+      state.history.demand.push(state.demand);
+      state.history.cloudCapacity.push(state.cloud.nodes * state.cloud.capacityPerNode);
+      state.history.tradCapacity.push(state.trad.nodes * state.trad.capacityPerNode);
+      state.history.cloudCost.push(state.cloud.cost);
+      state.history.tradCost.push(state.trad.cost);
+      state.history.cloudQueue.push(state.cloud.queue);
+      state.history.tradQueue.push(state.trad.queue);
+      state.history.cloudNodes.push(state.cloud.nodes);
+      state.history.tradNodes.push(state.trad.nodes);
+      const cloudAvail = 100 - (state.cloud.availabilityLoss / Math.max(state.elapsed, 1)) * 100;
+      const tradAvail = 100 - (state.trad.availabilityLoss / Math.max(state.elapsed, 1)) * 100;
+      state.history.cloudAvail.push(clamp(cloudAvail, 0, 100));
+      state.history.tradAvail.push(clamp(tradAvail, 0, 100));
+      if (state.pendingOutageMark) {
+        state.history.outageMarks.push(state.history.demand.length - 1);
+        state.pendingOutageMark = false;
+      }
+      trimHistory();
+    }
+
+    function updateNarrative() {
+      const cloudQueue = state.cloud.queue;
+      const tradQueue = state.trad.queue;
+      const cloudCost = state.cloud.cost;
+      const tradCost = state.trad.cost;
+      const autoscale = controls.autoscale.checked;
+
+      if (tradQueue > cloudQueue * 1.7 && autoscale) {
+        state.teacherMessage = "Traditional computing is building a larger queue because capacity expands slowly. This is a good moment to discuss hardware procurement and setup time.";
+      } else if (!autoscale && state.cloud.queue > tradQueue * 1.1) {
+        state.teacherMessage = "Cloud computing is underperforming because autoscaling is off. This shows that cloud benefits depend on configuration and management, not just hosting location.";
+      } else if (cloudCost > tradCost * 1.25) {
+        state.teacherMessage = "Cloud computing is serving demand well, but the cumulative cost is growing faster. This helps students discuss the trade-off between agility and cost control.";
+      } else {
+        state.teacherMessage = "Both models are coping reasonably well right now. Increase spike intensity or growth rate to highlight the difference in elasticity more clearly.";
+      }
+
+      if (state.trad.outageTimer > 0 || state.cloud.outageTimer > 0) {
+        state.insightMessage = "An outage reduces effective capacity. Notice that the traditional lane loses more throughput for longer, while the cloud lane recovers faster because of redundancy and flexible provisioning.";
+      } else if (Number(controls.remote.value) > 70) {
+        state.insightMessage = "A high remote workforce generally favors cloud-hosted services because access can be distributed more easily. Students should compare this with collaboration and availability metrics.";
+      } else if (Number(controls.delay.value) >= 12) {
+        state.insightMessage = "A long hardware upgrade delay makes traditional systems less responsive to sudden demand. This is useful when explaining procurement cycles and physical installation time.";
+      } else {
+        state.insightMessage = "Discuss architecture decisions as trade-offs. Traditional computing can be predictable and controlled, while cloud computing shines when demand is uncertain or widely distributed.";
+      }
+
+      $("teachingNote").innerHTML = state.teacherMessage.replace("Cloud computing", '<span class="emph-cloud">Cloud computing</span>').replace("Traditional computing", '<span class="emph-trad">Traditional computing</span>');
+      $("insightNote").innerHTML = state.insightMessage.replace("cloud", '<span class="emph-cloud">cloud</span>').replace("traditional", '<span class="emph-trad">traditional</span>');
+    }
+
+    function getScores() {
+      const cloudCapacity = state.cloud.nodes * state.cloud.capacityPerNode;
+      const tradCapacity = state.trad.nodes * state.trad.capacityPerNode;
+      const cloudScore = 50
+        + (cloudCapacity > state.demand ? 12 : -8)
+        - Math.min(15, state.cloud.queue / 65)
+        - state.cloud.availabilityLoss * 1.3
+        - Math.max(0, (state.cloud.cost - state.trad.cost) / 1100)
+        + Number(controls.remote.value) * 0.08;
+
+      const tradScore = 50
+        + (tradCapacity > state.demand ? 10 : -10)
+        - Math.min(18, state.trad.queue / 55)
+        - state.trad.availabilityLoss * 1.5
+        - Math.max(0, (state.trad.cost - state.cloud.cost) / 1400)
+        + (100 - Number(controls.remote.value)) * 0.04;
+
+      return {
+        cloud: Math.round(clamp(cloudScore, 0, 100)),
+        trad: Math.round(clamp(tradScore, 0, 100))
+      };
+    }
+
+    function updateKpis() {
+      const cloudCapacity = state.cloud.nodes * state.cloud.capacityPerNode;
+      const tradCapacity = state.trad.nodes * state.trad.capacityPerNode;
+      const cloudUtil = cloudCapacity ? (state.demand / cloudCapacity) * 100 : 0;
+      const tradUtil = tradCapacity ? (state.demand / tradCapacity) * 100 : 0;
+      const cloudAvail = 100 - (state.cloud.availabilityLoss / Math.max(state.elapsed, 1)) * 100;
+      const tradAvail = 100 - (state.trad.availabilityLoss / Math.max(state.elapsed, 1)) * 100;
+      const scores = getScores();
+
+      $("elapsedKpi").textContent = `${state.elapsed.toFixed(1)} s`;
+      $("demandKpi").textContent = `${Math.round(state.demand)} req/s`;
+      $("cloudScoreKpi").textContent = scores.cloud;
+      $("tradScoreKpi").textContent = scores.trad;
+
+      $("cloudUtil").textContent = `${Math.round(clamp(cloudUtil, 0, 200))}%`;
+      $("tradUtil").textContent = `${Math.round(clamp(tradUtil, 0, 200))}%`;
+      $("cloudUtilBar").style.width = `${clamp(cloudUtil, 0, 100)}%`;
+      $("tradUtilBar").style.width = `${clamp(tradUtil, 0, 100)}%`;
+
+      $("cloudQueue").textContent = Math.round(state.cloud.queue).toLocaleString();
+      $("tradQueue").textContent = Math.round(state.trad.queue).toLocaleString();
+      $("cloudNodes").textContent = state.cloud.nodes.toFixed(1);
+      $("tradNodes").textContent = Math.round(state.trad.nodes);
+      $("cloudCost").textContent = formatMoney(state.cloud.cost);
+      $("tradCost").textContent = formatMoney(state.trad.cost);
+      $("cloudAvail").textContent = `${clamp(cloudAvail, 0, 100).toFixed(1)}%`;
+      $("tradAvail").textContent = `${clamp(tradAvail, 0, 100).toFixed(1)}%`;
+    }
+
+    function seedDots(system, laneY, color) {
+      const spawnCount = Math.round(clamp(system.processedPulse / 35, 1, 6));
+      for (let i = 0; i < spawnCount; i++) {
+        system.requestDots.push({
+          x: 75 + Math.random() * 40,
+          y: laneY + Math.random() * 44 - 22,
+          vx: 1.5 + Math.random() * 1.6,
+          size: 4 + Math.random() * 3,
+          color,
+          alpha: 0.9
+        });
+      }
+      if (system.requestDots.length > 120) {
+        system.requestDots.splice(0, system.requestDots.length - 120);
+      }
+    }
+
+    function drawLane(x, y, w, h, label, accent, system, kind) {
+      simCtx.save();
+      simCtx.fillStyle = "rgba(15, 23, 42, 0.72)";
+      simCtx.strokeStyle = accent;
+      simCtx.lineWidth = 2;
+      roundRect(simCtx, x, y, w, h, 18, true, true);
+
+      simCtx.fillStyle = accent;
+      simCtx.font = "700 18px Space Grotesk, IBM Plex Sans, Arial";
+      simCtx.fillText(label, x + 16, y + 26);
+
+      simCtx.fillStyle = "rgba(148, 163, 184, 0.16)";
+      roundRect(simCtx, x + 12, y + 42, 120, h - 58, 12, true, false);
+      simCtx.fillStyle = "#c084fc";
+      const queueHeight = clamp(system.queue / 8, 8, h - 72);
+      roundRect(simCtx, x + 18, y + h - 20 - queueHeight, 108, queueHeight, 10, true, false);
+      simCtx.fillStyle = "#e9d5ff";
+      simCtx.font = "600 13px IBM Plex Sans, Space Grotesk, Arial";
+      simCtx.fillText("Queue", x + 54, y + h - 28);
+
+      const nodes = kind === 'cloud' ? Math.floor(system.nodes) : Math.round(system.nodes);
+      for (let i = 0; i < nodes; i++) {
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        const sx = x + 170 + col * 100;
+        const sy = y + 60 + row * 72;
+        simCtx.fillStyle = kind === 'cloud' ? "rgba(56, 189, 248, 0.18)" : "rgba(245, 158, 11, 0.18)";
+        simCtx.strokeStyle = accent;
+        roundRect(simCtx, sx, sy, 74, 42, 10, true, true);
+        simCtx.fillStyle = accent;
+        simCtx.fillRect(sx + 10, sy + 10, 52, 6);
+        simCtx.fillRect(sx + 10, sy + 20, 38, 6);
+        simCtx.fillRect(sx + 10, sy + 30, 46, 4);
+        const pulse = clamp(system.processedPulse / 35, 0, 1);
+        simCtx.fillStyle = `rgba(255,255,255,${0.15 + pulse * 0.6})`;
+        simCtx.beginPath();
+        simCtx.arc(sx + 61, sy + 14, 4 + pulse * 2, 0, Math.PI * 2);
+        simCtx.fill();
+      }
+
+      simCtx.strokeStyle = "rgba(255,255,255,0.12)";
+      simCtx.setLineDash([6, 7]);
+      simCtx.beginPath();
+      simCtx.moveTo(x + 140, y + h / 2);
+      simCtx.lineTo(x + w - 14, y + h / 2);
+      simCtx.stroke();
+      simCtx.setLineDash([]);
+
+      if (system.outageTimer > 0) {
+        simCtx.fillStyle = "rgba(251, 113, 133, 0.22)";
+        roundRect(simCtx, x + w - 160, y + 12, 142, 34, 12, true, false);
+        simCtx.fillStyle = "#fecdd3";
+        simCtx.font = "700 13px IBM Plex Sans, Space Grotesk, Arial";
+        simCtx.fillText("Reduced capacity", x + w - 146, y + 34);
+      }
+      simCtx.restore();
+    }
+
+    function drawDots(system, boundaryRight) {
+      for (const dot of system.requestDots) {
+        dot.x += dot.vx;
+        dot.alpha -= 0.004;
+        if (dot.x > boundaryRight || dot.alpha <= 0) {
+          dot.x = 75;
+          dot.alpha = 0.9;
+        }
+        simCtx.fillStyle = hexToRgba(dot.color, dot.alpha);
+        simCtx.beginPath();
+        simCtx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+        simCtx.fill();
+      }
+    }
+
+    function drawSimulation() {
+      simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      drawBackgroundGrid(simCtx, simCanvas.width, simCanvas.height);
+
+      const cloudY = 26;
+      const tradY = 224;
+      drawLane(18, cloudY, simCanvas.width - 36, 160, "Cloud Computing", "#38bdf8", state.cloud, 'cloud');
+      drawLane(18, tradY, simCanvas.width - 36, 160, "Traditional Computing", "#f59e0b", state.trad, 'trad');
+
+      seedDots(state.cloud, cloudY + 84, "#38bdf8");
+      seedDots(state.trad, tradY + 84, "#f59e0b");
+      drawDots(state.cloud, simCanvas.width - 40);
+      drawDots(state.trad, simCanvas.width - 40);
+
+      simCtx.fillStyle = "rgba(255,255,255,0.12)";
+      simCtx.font = "600 14px IBM Plex Sans, Space Grotesk, Arial";
+      simCtx.fillText(`Demand: ${Math.round(state.demand)} req/s`, 22, 18);
+      simCtx.fillText(`Remote users: ${controls.remote.value}%`, 240, 18);
+      simCtx.fillText(`Autoscaling: ${controls.autoscale.checked ? 'ON' : 'OFF'}`, 430, 18);
+    }
+
+    function drawBackgroundGrid(ctx, w, h) {
+      ctx.save();
+      ctx.fillStyle = "rgba(2, 6, 23, 0.4)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawCharts() {
+      drawLineChart(capCtx, capacityCanvas, [
+        { data: state.history.demand, color: "#c084fc", label: "Demand" },
+        { data: state.history.cloudCapacity, color: "#38bdf8", label: "Cloud capacity" },
+        { data: state.history.tradCapacity, color: "#f59e0b", label: "Traditional capacity" }
+      ], "Requests per second");
+
+      drawLineChart(costCtx, costCanvas, [
+        { data: state.history.cloudCost, color: "#38bdf8", label: "Cloud cost" },
+        { data: state.history.tradCost, color: "#f59e0b", label: "Traditional cost" }
+      ], "Cumulative cost");
+
+      drawLineChart(queueCtx, queueCanvas, [
+        { data: state.history.cloudQueue, color: "#38bdf8", label: "Cloud queue" },
+        { data: state.history.tradQueue, color: "#f59e0b", label: "Traditional queue" }
+      ], "Queued requests");
+
+      drawLineChart(nodesCtx, nodesCanvas, [
+        { data: state.history.cloudNodes, color: "#38bdf8", label: "Cloud nodes" },
+        { data: state.history.tradNodes, color: "#f59e0b", label: "Traditional racks" }
+      ], "Active units");
+
+      drawLineChart(availCtx, availCanvas, [
+        { data: state.history.cloudAvail, color: "#34d399", label: "Cloud availability" },
+        { data: state.history.tradAvail, color: "#fbbf24", label: "Traditional availability" }
+      ], "Availability (%)", { markers: state.history.outageMarks });
+    }
+
+    function drawLineChart(ctx, canvas, series, yLabel, options = {}) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = { top: 20, right: 20, bottom: 34, left: 54 };
+      drawBackgroundGrid(ctx, w, h);
+
+      const allValues = series.flatMap(s => s.data);
+      const maxVal = Math.max(10, ...allValues, 1) * 1.1;
+      const plotW = w - pad.left - pad.right;
+      const plotH = h - pad.top - pad.bottom;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "rgba(229, 238, 251, 0.75)";
+      ctx.font = "12px IBM Plex Sans, Space Grotesk, Arial";
+
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (plotH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(w - pad.right, y);
+        ctx.stroke();
+        const val = Math.round(maxVal - (maxVal / 4) * i);
+        ctx.fillText(val.toLocaleString(), 8, y + 4);
+      }
+
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, h - pad.bottom);
+      ctx.lineTo(w - pad.right, h - pad.bottom);
+      ctx.stroke();
+
+      if (options.markers && options.markers.length && series[0].data.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(251, 113, 133, 0.65)";
+        ctx.lineWidth = 1.5;
+        options.markers.forEach(idx => {
+          const x = pad.left + (idx / Math.max(1, series[0].data.length - 1)) * plotW;
+          ctx.beginPath();
+          ctx.moveTo(x, pad.top);
+          ctx.lineTo(x, h - pad.bottom);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      series.forEach((s, idx) => {
+        if (!s.data.length) return;
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        s.data.forEach((v, i) => {
+          const x = pad.left + (i / Math.max(1, s.data.length - 1)) * plotW;
+          const y = pad.top + (1 - v / maxVal) * plotH;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        const last = s.data[s.data.length - 1];
+        const lx = pad.left + plotW;
+        const ly = pad.top + (1 - last / maxVal) * plotH;
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText(s.label, w - pad.right - 130, 20 + idx * 16);
+      });
+
+      ctx.fillStyle = "rgba(229, 238, 251, 0.75)";
+      ctx.fillText(yLabel, 12, 12);
+      ctx.fillText("Time", w - 42, h - 10);
+      ctx.restore();
+    }
+
+    function attachTooltip(canvas, tooltipEl, series, yFormatter) {
+      const pad = { top: 20, right: 20, bottom: 34, left: 54 };
+      canvas.addEventListener("mousemove", (e) => {
+        if (!series[0].data.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const w = canvas.width;
+        const h = canvas.height;
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        if (x < pad.left || x > w - pad.right || y < pad.top || y > h - pad.bottom) {
+          tooltipEl.classList.remove("show");
+          return;
+        }
+
+        const idx = Math.round(((x - pad.left) / plotW) * (series[0].data.length - 1));
+        const safeIdx = clamp(idx, 0, series[0].data.length - 1);
+        const lines = series.map(s => `${s.label}: ${yFormatter(s.data[safeIdx])}`);
+        tooltipEl.textContent = `t-${series[0].data.length - 1 - safeIdx}s | ` + lines.join(" • ");
+        tooltipEl.style.left = `${x}px`;
+        tooltipEl.style.top = `${y}px`;
+        tooltipEl.classList.add("show");
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        tooltipEl.classList.remove("show");
+      });
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace('#', '');
+      const bigint = parseInt(clean, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + height, r);
+      ctx.arcTo(x + width, y + height, x, y + height, r);
+      ctx.arcTo(x, y + height, x, y, r);
+      ctx.arcTo(x, y, x + width, y, r);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    function tick(ts) {
+      if (!state.running) return;
+      if (!state.lastTs) state.lastTs = ts;
+      const dt = Math.min(0.05, (ts - state.lastTs) / 1000);
+      state.lastTs = ts;
+      state.elapsed += dt;
+
+      updateDemand();
+      maybeSpawnOutage(dt);
+      updateSystem(state.cloud, 'cloud', dt);
+      updateSystem(state.trad, 'trad', dt);
+      captureHistory();
+      updateNarrative();
+      updateKpis();
+      drawSimulation();
+      drawCharts();
+
+      requestAnimationFrame(tick);
+    }
+
+    $("startBtn").addEventListener("click", () => {
+      if (!state.running) {
+        state.running = true;
+        $("pauseBtn").textContent = "Pause";
+        state.lastTs = 0;
+        requestAnimationFrame(tick);
+      }
+    });
+
+    $("pauseBtn").addEventListener("click", () => {
+      if (!state.running && state.elapsed === 0) return;
+      state.running = !state.running;
+      $("pauseBtn").textContent = state.running ? "Pause" : "Resume";
+      if (state.running) {
+        state.lastTs = 0;
+        requestAnimationFrame(tick);
+      }
+    });
+
+    $("resetBtn").addEventListener("click", () => {
+      $("pauseBtn").textContent = "Pause";
+      resetState();
+    });
+
+    attachTooltip(capacityCanvas, tooltips.capacity, [
+      { data: state.history.demand, label: "Demand" },
+      { data: state.history.cloudCapacity, label: "Cloud cap." },
+      { data: state.history.tradCapacity, label: "Trad cap." }
+    ], v => `${Math.round(v)} req/s`);
+
+    attachTooltip(costCanvas, tooltips.cost, [
+      { data: state.history.cloudCost, label: "Cloud cost" },
+      { data: state.history.tradCost, label: "Trad cost" }
+    ], v => formatMoney(v));
+
+    attachTooltip(queueCanvas, tooltips.queue, [
+      { data: state.history.cloudQueue, label: "Cloud queue" },
+      { data: state.history.tradQueue, label: "Trad queue" }
+    ], v => `${Math.round(v).toLocaleString()} req`);
+
+    attachTooltip(nodesCanvas, tooltips.nodes, [
+      { data: state.history.cloudNodes, label: "Cloud nodes" },
+      { data: state.history.tradNodes, label: "Trad racks" }
+    ], v => `${v.toFixed(1)}`);
+
+    attachTooltip(availCanvas, tooltips.avail, [
+      { data: state.history.cloudAvail, label: "Cloud avail" },
+      { data: state.history.tradAvail, label: "Trad avail" }
+    ], v => `${v.toFixed(1)}%`);
+
+    resetState();
+  </script>
+</body>
+</html>
